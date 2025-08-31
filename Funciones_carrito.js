@@ -89,8 +89,8 @@ function checkout() {
     doc.setFontSize(22);
     doc.text("Ruvo SA. de CV", 10, 15);
     doc.setFontSize(10);
-    doc.text("Dirección: Calle Falsa 123", 10, 22);
-    doc.text("admin95@ruvosv.com", 10, 27);
+    doc.text("Dirección: Calle San Rafael 25 Ahuachapan", 10, 22);
+    doc.text("adminJorge@ruvosv.com", 10, 27);
     doc.text("Teléfono: +503 70009595", 10, 32);
     doc.setFontSize(18);
     doc.text("Factura de Compra", 10, 45);
@@ -156,3 +156,4 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 checkoutButton.addEventListener("click", checkout);
+
