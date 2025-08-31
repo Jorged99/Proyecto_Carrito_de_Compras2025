@@ -32,13 +32,33 @@ function renderCart() {
                  style="width: 60px; height: 60px; object-fit: cover; margin-right: 15px;">
             <div style="flex-grow: 1;">
                 <h6 class="mb-0">${product.title}</h6>
-                <p class="mb-0 text-muted">Cantidad: ${product.quantity}</p>
+                <div class="d-flex align-items-center mt-1">
+                    <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity(${index}, -1)">-</button>
+                    <span class="mx-2">${product.quantity}</span>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="updateQuantity(${index}, 1)">+</button>
+                </div>
             </div>
             <strong class="text-nowrap">$${(product.price * product.quantity).toFixed(2)}</strong>
             <button class="btn btn-sm btn-danger ms-2" onclick="removeItem(${index})">X</button>
         `;
         cartItemsContainer.appendChild(itemDiv);
     });
+}
+
+// Actualizar la cantidad de un producto
+function updateQuantity(index, change) {
+    const product = carrito[index];
+    const newQuantity = product.quantity + change;
+
+    if (newQuantity <= 0) {
+        // Si la cantidad es 0 o menos, eliminar el producto
+        removeItem(index);
+    } else {
+        product.quantity = newQuantity;
+        localStorage.setItem("carrito", JSON.stringify(carrito));
+        renderCart();
+        updateTotal();
+    }
 }
 
 // Eliminar producto del carrito
@@ -49,10 +69,12 @@ function removeItem(index) {
     updateTotal();
 }
 
-// Calcular total
+// Calcular el total con impuestos
 function updateTotal() {
-    const total = carrito.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    totalPriceElement.textContent = `$${total.toFixed(2)}`;
+    const subtotal = carrito.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    const tax = subtotal * 0.13;
+    const finalTotal = subtotal + tax;
+    totalPriceElement.textContent = `$${finalTotal.toFixed(2)}`;
 }
 
 // Finalizar compra y generar PDF
@@ -64,24 +86,51 @@ function checkout() {
 
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
-
+    doc.setFontSize(22);
+    doc.text("Ruvo SA. de CV", 10, 15);
+    doc.setFontSize(10);
+    doc.text("Dirección: Calle Falsa 123", 10, 22);
+    doc.text("admin95@ruvosv.com", 10, 27);
+    doc.text("Teléfono: +503 70009595", 10, 32);
     doc.setFontSize(18);
-    doc.text("Factura de compra", 10, 10);
+    doc.text("Factura de Compra", 10, 45);
 
+    const today = new Date();
+    const formattedDate = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear()}`;
+    doc.setFontSize(10);
+    doc.text(`Fecha: ${formattedDate}`, 150, 45);
+    let y = 60;
     doc.setFontSize(12);
-    let y = 30;
+    doc.text("Descripción", 10, y);
+    doc.text("Cantidad", 120, y);
+    doc.text("Subtotal", 170, y);
+    y += 5;
+    doc.setLineWidth(0.5);
+    doc.line(10, y, 200, y);
+    y += 10;
+    const subtotal = carrito.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     carrito.forEach(item => {
-        doc.text(`${item.title} (x${item.quantity}) - $${(item.price * item.quantity).toFixed(2)}`, 10, y);
+        doc.text(item.title, 10, y);
+        doc.text(`${item.quantity}`, 120, y);
+        doc.text(`$${(item.price * item.quantity).toFixed(2)}`, 170, y);
         y += 10;
     });
-
+    
+    const tax = subtotal * 0.13;
+    const finalTotal = subtotal + tax;
     y += 10;
-    const total = carrito.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-    doc.text(`TOTAL: $${total.toFixed(2)}`, 10, y);
-
+    doc.setFontSize(12);
+    doc.text(`Subtotal: $${subtotal.toFixed(2)}`, 160, y);
+    y += 10;
+    doc.text(`Impuestos (13%): $${tax.toFixed(2)}`, 160, y);
+    y += 10;
+    doc.setFontSize(14);
+    doc.text(`TOTAL: $${finalTotal.toFixed(2)}`, 160, y);
+    
+    doc.setFontSize(10);
+    doc.text("¡Gracias por tu compra!", 10, 280);
     doc.save("Factura.pdf");
-
-    // Vaciar carrito después de la compra
+    
     carrito = [];
     localStorage.removeItem("carrito");
     renderCart();
@@ -89,11 +138,11 @@ function checkout() {
 
     Swal.fire({
         title: "¡Compra realizada!",
-        text: "Tu factura ha sido generada. ¿Quieres seguir comprando",
+        text: "Tu factura ha sido generada en PDF. ¿Quieres regresar a la página principal?",
         icon: "success",
         showCancelButton: true,
-        confirmButtonText: "Sí",
-        cancelButtonText: "No, Salir"
+        confirmButtonText: "Sí, regresar",
+        cancelButtonText: "No, quedarme"
     }).then((result) => {
         if (result.isConfirmed) {
             window.location.href = "index.html";
