@@ -3,7 +3,7 @@ let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
 const countProducts = document.querySelector('.count-products');
 countProducts.innerText = carrito.length;
 
-// Manejador de eventos para los botones "Agregar al carrito" cambios 
+// Manejador de eventos para los botones "Agregar al carrito" cambios cambio de ejemplo
 const cards = document.querySelectorAll('.card');
 
 cards.forEach(card => {
@@ -47,4 +47,5 @@ cards.forEach(card => {
         });
     });
 });
+
 
